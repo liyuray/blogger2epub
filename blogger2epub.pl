@@ -6,6 +6,8 @@ use EBook::EPUB;
 use File::Path qw(make_path);
 use Encode qw(decode encode);
 use autodie;
+use Mojo::DOM;
+use File::Slurp;
 
 my %titleh;
 my @titles = qw(all);
@@ -92,23 +94,31 @@ sub preprocess {
 #    $fnoo =~ s/\.html$/-2.html/;
     my $fno = "../epub/$fnoo";
 #    $fno =~ s/\/raw\//\/epub\//;
-    open my $fh, "<:utf8", $file or die "cannot open < $!";
+#    open my $fh, "<:utf8", $file or die "cannot open < $!";
+    my $html = read_file($file, binmode => ':utf8');
     open my $fho, ">:utf8", $fno or die "cannot open > $!";
-    while (<$fh>) {
-      $titleh{$fnoo} = $1 if /<title>(.*)<\/title>/;
-      last if /<h3 class='post-title entry-title'>/;
-    }
-    print $fho get_head($titleh{$fnoo});
-    print $fho "<h3>";
-    while (<$fh>) {
-      last if /<div class='post-footer'>/;
+
+    my $dom = Mojo::DOM->new($html);
+    $titleh{$fnoo} = $dom->at('title')->text;
+    my $loc = 'div.post-header-line-1';
+    my $content= $dom->at($loc);
+    $content->find('script, iframe')->pluck('remove');
+    my @lines = split /\n/, $content->to_xml;
+    #    while (<$fh>) {
+#      $titleh{$fnoo} = $1 if /<title>(.*)<\/title>/;
+#      last if /<h3 class='post-title entry-title'>/;
+#    }
+#    print $fho get_head($titleh{$fnoo});
+#    print $fho "<h3>";
+    for (@lines) {
+      #      last if /<div class='post-footer'>/;
       #    s/$match/'"'.sprintf("%2d",$i++).$jpgh{$1}.'"'/ge;
       s/$match/'"'.$inhjpgh{$1}.'"'/ge;
       print $fho $_;
     }
-    print $fho $tail;
+#    print $fho $tail;
     close $fho;
-    close $fh;
+#    close $fh;
   }
   chdir("../..");
 }
