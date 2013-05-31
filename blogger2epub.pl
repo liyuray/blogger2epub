@@ -8,7 +8,28 @@ use Encode qw(decode encode);
 use autodie;
 use Mojo::DOM;
 use File::Slurp;
+no warnings qw{qw};
 
+my $filter = join ',', qw(
+                           script
+                           meta
+                           style
+                           iframe
+                           link
+                           div.navbar
+                           div.widget-content
+                           div.post-footer
+                           div.comments
+                           div.blog-pager
+                           #footer
+                           span.widget-item-control
+                           #widget-sidebar
+                           #search-placement
+                           #header
+                           #skiplinks
+                           #sidebar-wrapper
+                           #horiz-menu
+                        );
 my %titleh;
 my @titles = qw(all);
 
@@ -100,22 +121,20 @@ sub preprocess {
 
     my $dom = Mojo::DOM->new($html);
     $titleh{$fnoo} = $dom->at('title')->text;
-    my $loc = 'div.post-header-line-1';
-    my $content= $dom->at($loc);
-    $content->find('script, iframe')->pluck('remove');
-    my @lines = split /\n/, $content->to_xml;
+    $dom->find($filter)->pluck('remove');
+    my $output = $dom->to_xml;
     #    while (<$fh>) {
 #      $titleh{$fnoo} = $1 if /<title>(.*)<\/title>/;
 #      last if /<h3 class='post-title entry-title'>/;
 #    }
 #    print $fho get_head($titleh{$fnoo});
 #    print $fho "<h3>";
-    for (@lines) {
+#    for (@lines) {
       #      last if /<div class='post-footer'>/;
       #    s/$match/'"'.sprintf("%2d",$i++).$jpgh{$1}.'"'/ge;
-      s/$match/'"'.$inhjpgh{$1}.'"'/ge;
-      print $fho $_;
-    }
+    $output =~ s/$match/'"'.$inhjpgh{$1}.'"'/ge;
+    print $fho $output;
+    #    }
 #    print $fho $tail;
     close $fho;
 #    close $fh;
