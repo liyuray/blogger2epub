@@ -83,6 +83,7 @@ sub preprocess {
     my $inhjpg = $jpg;
     $inhjpg =~ s/\%/%25/g;
     $inhjpg =~ s/\&/&amp;/g;
+    $inhjpg =~ s/\'/&#39;/g;
     $njpg =~ tr/a-zA-Z0-9.//cd;
     $njpg =~ s/\.(jpg|bmp|png|gif)\.(\d)/__$2\.$1/i;
     #print $njpg,$/;
