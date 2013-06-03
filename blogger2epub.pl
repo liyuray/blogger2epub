@@ -29,6 +29,7 @@ my $filter = join ',', qw(
                            #skiplinks
                            #sidebar-wrapper
                            #horiz-menu
+                           #fb-root
                         );
 my %titleh;
 my @titles = qw(all);
@@ -82,8 +83,8 @@ sub preprocess {
     my $njpg = $jpg;
     my $inhjpg = $jpg;
     $inhjpg =~ s/\%/%25/g;
-    $inhjpg =~ s/\&/&amp;/g;
-    $inhjpg =~ s/\'/&#39;/g;
+#    $inhjpg =~ s/\&/&amp;/g;
+#    $inhjpg =~ s/\'/&#39;/g;
     $njpg =~ tr/a-zA-Z0-9.//cd;
     $njpg =~ s/\.(jpg|bmp|png|gif)\.(\d)/__$2\.$1/i;
     #print $njpg,$/;
@@ -100,8 +101,8 @@ sub preprocess {
 #  $jpgh{"Global+Bond+Fund+Holding%25E7%25BE%258E%25E5%259C%258B.jpg"} = "94GlobalBondFundHoldingE7BE8EE59C8B.jpg";
 #  $jpgh{"%25E7%25BE%258E%25E5%259C%258Bvs%25E7%259B%25A7%25E6%25A3%25AE%25E5%25A0%25A1%25E7%25B8%25BE%25E6%2595%2588.jpg"} = "53E7BE8EE59C8BvsE79BA7E6A3AEE5A0A1E7B8BEE69588.jpg";
 
-  my $pattern = '(' . join('|', map {quotemeta} grep {$inhjpgh{$_} ne $_} keys %inhjpgh). ')';
-  my $match   = qr/"$pattern"/;
+#  my $pattern = '(' . join('|', map {quotemeta} grep {$inhjpgh{$_} ne $_} keys %inhjpgh). ')';
+#  my $match   = qr/"$pattern"/;
 #  print $match;
   chdir("$title");
   #my $i;
@@ -122,8 +123,19 @@ sub preprocess {
 
     my $dom = Mojo::DOM->new($html);
     $titleh{$fnoo} = $dom->at('title')->text;
+    $dom->at('html')->attrs('xml:lang'=>'zh','lang'=>'zh');
+    $dom->at('body')->attrs(oncontextmenu=>'',ondragstart=>'',onselectstart => '');
     $dom->find($filter)->pluck('remove');
-    my $output = $dom->to_xml;
+    $dom->find('a[onblur]')->each(sub {shift->attrs(onblur=>'')});
+    $dom->find('img[src]')->each(sub {
+        my $key = $_[0]->attrs('src');
+        $_[0]->attrs( src => $inhjpgh{$key} ) if exists $inhjpgh{$key};
+      });
+#    for my $img (@imgs) {
+#        my $key = $img->attrs('src');
+#        $img->attrs( src => $inhjpgh{$key} ) if exists $inhjpgh{$key};
+#    }
+    my $output = $dom->root->to_xml;
     #    while (<$fh>) {
 #      $titleh{$fnoo} = $1 if /<title>(.*)<\/title>/;
 #      last if /<h3 class='post-title entry-title'>/;
@@ -133,8 +145,9 @@ sub preprocess {
 #    for (@lines) {
       #      last if /<div class='post-footer'>/;
       #    s/$match/'"'.sprintf("%2d",$i++).$jpgh{$1}.'"'/ge;
-    $output =~ s/$match/'"'.$inhjpgh{$1}.'"'/ge;
-    print $fho $output;
+#    $output =~ s/$match/'"'.$inhjpgh{$1}.'"'/ge if 0;
+    say $fho q(<?xml version="1.0" encoding="utf-8"?>);
+    say $fho $output;
     #    }
 #    print $fho $tail;
     close $fho;
@@ -153,7 +166,7 @@ sub genepub {
   # Set metadata: title/author/language/id
   $epub->add_title($title);
   $epub->add_author('Green Horn');
-  $epub->add_language('en');
+  $epub->add_language('zh');
   $epub->add_identifier('1440465908', 'ISBN');
 
   # Add package content: stylesheet, font, xhtml and cover
