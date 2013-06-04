@@ -30,6 +30,7 @@ my $filter = join ',', qw(
                            #sidebar-wrapper
                            #horiz-menu
                            #fb-root
+                           like
                         );
 my %titleh;
 my @titles = qw(all);
@@ -123,19 +124,34 @@ sub preprocess {
 
     my $dom = Mojo::DOM->new($html);
     $titleh{$fnoo} = $dom->at('title')->text;
-    $dom->at('html')->attrs('xml:lang'=>'zh','lang'=>'zh');
-    $dom->at('body')->attrs(oncontextmenu=>'',ondragstart=>'',onselectstart => '');
-    $dom->find($filter)->pluck('remove');
-    $dom->find('a[onblur]')->each(sub {shift->attrs(onblur=>'')});
-    $dom->find('img[src]')->each(sub {
-        my $key = $_[0]->attrs('src');
-        $_[0]->attrs( src => $inhjpgh{$key} ) if exists $inhjpgh{$key};
-      });
+#    $dom->at('html')->attrs('xml:lang'=>'zh','lang'=>'zh');
+#    $dom->at('body')->attrs(oncontextmenu=>'',ondragstart=>'',onselectstart => '');
 #    for my $img (@imgs) {
 #        my $key = $img->attrs('src');
 #        $img->attrs( src => $inhjpgh{$key} ) if exists $inhjpgh{$key};
 #    }
-    my $output = $dom->root->to_xml;
+    my $odom = Mojo::DOM->new;
+    $odom->tree(['root',
+                 ['tag', 'html', {'xmlns' => 'http://www.w3.org/1999/xhtml'}, {},
+                  ['tag', 'head', {}, {},
+                   ['tag', 'title',{}, {},
+                    ['text', $titleh{$fnoo},
+                    ],
+                   ],
+                  ],
+                  ['tag', 'body', {}, {},
+                   $dom->at('div.post.hentry')->tree,
+                  ],
+                 ],
+                ]);
+    $odom->find($filter)->pluck('remove');
+    $odom->find('a[onblur]')->each(sub {delete shift->attrs->{onblur}});
+    $odom->find('a[target]')->each(sub {delete shift->attrs->{target}});
+    $odom->find('img[src]')->each(sub {
+                                   my $key = $_[0]->attrs('src');
+                                   $_[0]->attrs( src => $inhjpgh{$key} ) if exists $inhjpgh{$key};
+                                 });
+    my $output = $odom->root->to_xml;
     #    while (<$fh>) {
 #      $titleh{$fnoo} = $1 if /<title>(.*)<\/title>/;
 #      last if /<h3 class='post-title entry-title'>/;
