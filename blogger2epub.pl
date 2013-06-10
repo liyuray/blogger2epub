@@ -52,13 +52,13 @@ sub preprocess {
   my %inhjpgh;
   my @b5jpgs = (
                 <*.jpg>,
-                <*.jpg.[0-9]>,
+                <*.jpg.[0-9]*>,
                 <*.bmp>,
-                <*.bmp.[0-9]>,
+                <*.bmp.[0-9]*>,
                 <*.png>,
-                <*.png.[0-9]>,
+                <*.png.[0-9]*>,
                 <*.gif>,
-                <*.gif.[0-9]>,
+                <*.gif.[0-9]*>,
                );
   my @ucjpgs = map {decode('big5',$_)} @b5jpgs;
   @b5jpgh{@ucjpgs} = @b5jpgs;
@@ -72,7 +72,7 @@ sub preprocess {
 #    $inhjpg =~ s/\&/&amp;/g;
 #    $inhjpg =~ s/\'/&#39;/g;
     $njpg =~ tr/a-zA-Z0-9.//cd;
-    $njpg =~ s/\.(jpg|bmp|png|gif)\.(\d)/__$2\.$1/i;
+    $njpg =~ s/\.(jpg|bmp|png|gif)\.(\d+)/__$2\.$1/i;
     if ($jpg ne $njpg) {
         $jpgh{$jpg} = sprintf("%04d",$i++)."_".$njpg;
         $inhjpgh{$inhjpg} = $jpgh{$jpg};
@@ -86,7 +86,7 @@ sub preprocess {
   chdir("..");
 
   chdir("$title/raw");
-  my @files = <*.html>;
+  my @files = (<*.html>,<*.htm>);
 
   for my $file (@files) {
     my $fnoo = $file;
@@ -138,10 +138,10 @@ sub genepub {
 
   # Add package content: stylesheet, font, xhtml and cover
   #    $epub->copy_stylesheet('/path/to/style.css', 'style.css');
-  $epub->copy_file($_, $_, 'image/jpeg') for (<*.jpg>,<*.jpg.[0-9]>);
-  $epub->copy_file($_, $_, 'image/bmp') for (<*.bmp>,<*.bmp.[0-9]>);
-  $epub->copy_file($_, $_, 'image/png') for (<*.png>,<*.png.[0-9]>);
-  $epub->copy_file($_, $_, 'image/gif') for (<*.gif>,<*.gif.[0-9]>);
+  $epub->copy_file($_, $_, 'image/jpeg') for (<*.jpg>);
+  $epub->copy_file($_, $_, 'image/bmp') for (<*.bmp>);
+  $epub->copy_file($_, $_, 'image/png') for (<*.png>);
+  $epub->copy_file($_, $_, 'image/gif') for (<*.gif>);
 
   my $po = 1;
 
