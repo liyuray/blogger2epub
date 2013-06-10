@@ -32,21 +32,24 @@ my $filter = join ',', qw(
                            like
                         );
 my %titleh;
-my @titles = qw(all);
 
-for my $title (@titles) {
-  preprocess($title);
-  genepub($title);
-}
+my $root = shift @ARGV or die;
+my $dir = shift @ARGV or die;
+my $author = shift @ARGV || $dir;
+my $title = shift @ARGV || $author;
+
+preprocess($dir);
+genepub($dir, $title);
+
 
 sub preprocess {
-  my $title = shift;
+  my $dir = shift;
 
   my $tail = "</body></html>";
 
-  make_path("$title/epub");
+  make_path("$dir/epub");
 
-  chdir("$title/raw");
+  chdir("$dir/raw");
   my %jpgh;
   my %b5jpgh;
   my %inhjpgh;
@@ -81,11 +84,11 @@ sub preprocess {
         $inhjpgh{$inhjpg} = $jpgh{$jpg};
     }
   }
-  chdir("$title");
+  chdir("$dir");
   copy("raw/".$b5jpgh{$_}, "epub/".$jpgh{$_}) for @ucjpgs;
   chdir("..");
 
-  chdir("$title/raw");
+  chdir("$dir/raw");
   my @files = (<*.html>,<*.htm>);
 
   for my $file (@files) {
@@ -105,7 +108,8 @@ sub preprocess {
                    ],
                   ],
                   ['tag', 'body', {}, {},
-                   $dom->at('div.post.hentry')->tree,
+#                   $dom->at('div.post.hentry')->tree,
+                   $dom->at("div.$root")->tree,
                   ],
                  ],
                 ]);
@@ -125,16 +129,17 @@ sub preprocess {
 }
 
 sub genepub {
+  my $dir = shift;
   my $title = shift;
 
-  chdir("$title/epub");
+  chdir("$dir/epub");
   # Create EPUB object
   my $epub = EBook::EPUB->new;
   # Set metadata: title/author/language/id
   $epub->add_title($title);
-  $epub->add_author('Green Horn');
+  $epub->add_author($author);
   $epub->add_language('zh');
-  $epub->add_identifier('1440465908', 'ISBN');
+#  $epub->add_identifier('1440465908', 'ISBN');
 
   # Add package content: stylesheet, font, xhtml and cover
   #    $epub->copy_stylesheet('/path/to/style.css', 'style.css');
