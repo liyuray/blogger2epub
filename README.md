@@ -7,5 +7,5 @@ wget --content-disposition -P cache --restrict-file-names=nocontrol -D masterhsi
 
 
 ## produce epub ##
-perl blogger2epub.pl post.hentry all "green horn"
-perl blogger2epub.pl RightWrapper all1 "master hsiao"
+perl blogger2epub.pl post.hentry greenhorn "green horn"
+perl blogger2epub.pl RightWrapper masterhsiao "master hsiao"
