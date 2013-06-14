@@ -30,6 +30,7 @@ my $filter = join ',', qw(
                            #horiz-menu
                            #fb-root
                            like
+                           div.comments-template
                         );
 my %titleh;
 
@@ -92,11 +93,13 @@ sub preprocess {
   my @files = (<*.html>,<*.htm>);
 
   for my $file (@files) {
+      say STDERR $file;
     my $fnoo = $file;
     my $html = read_file($file, binmode => ':utf8');
-    open my $fho, ">:utf8", "../epub/$fnoo" or die "cannot open > $!";
 
     my $dom = Mojo::DOM->new($html);
+    next unless $dom->at("div.$root");
+    open my $fho, ">:utf8", "../epub/$fnoo" or die "cannot open > $!";
     $titleh{$fnoo} = $dom->at('title')->text;
     my $odom = Mojo::DOM->new;
     $odom->tree(['root',
@@ -162,7 +165,7 @@ sub genepub {
   }
 
   # Generate resulting ebook
-  $epub->pack_zip('a.epub');
+  $epub->pack_zip("$dir.epub");
 
   chdir("../..");
 }
